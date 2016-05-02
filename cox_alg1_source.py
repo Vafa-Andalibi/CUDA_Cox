@@ -121,6 +121,9 @@ def cox (nn,maxi, target,tsp,delta):
         int m = threadIdx.x ;
         int j = blockIdx.x ;
         int k = blockIdx.y;
+       //  if(j==0 && k ==0){
+        //  printf("Number: %d out of %d       ",m,blockDim.x);
+         // }
 
         float t1=0;
          for (int i = k; i<laf*laf; i += laf )
@@ -179,6 +182,7 @@ def cox (nn,maxi, target,tsp,delta):
          int n = blockIdx.x ;
          int b = gridDim.x;
 
+
          float part1 = 0;
          float part2 = 0;
          for (int j = 0; j<laf ;j++)
@@ -190,8 +194,33 @@ def cox (nn,maxi, target,tsp,delta):
         }
         """)
     func5 = mod5.get_function("hessian")
+    # mod6 = SourceModule("""
+    # #include <stdio.h>
+    # #include <math.h>
+    # __global__ void temp_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf, float *temp1, float *temp2, float *temp3)
+    # {
+    # int m = threadIdx.x;
+    # int j = blockIdx.x ;
+    # int k = blockIdx.y ;
+    #
+    # float t1=0;
+    # float t2=0;
+    # float t3=0;
+    #  for (int i = m; i<laf*laf; i += laf )
+    # {
+    # t1 += z2[j*laf*laf + i] * z2[k*laf*laf + i] * ssum_d[i];
+    # t2 += z2[j*laf*laf + i] * ssum_d[i];
+    # t3 += z2[k*laf*laf + i] * ssum_d[i];
+    # }
+    # temp1[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t1;
+    # temp2[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t2;
+    # temp3[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t3;
+    # }
+    # """)
+    # func6 = mod6.get_function("temp_calculator")
+
     for i in range (0,100):
-        scc = zeros_like(z) ;
+        scc = zeros_like(z)
         for l in range (0,p):
             scc [l,:,:] = bet[l] * z[l,:,:]
         ssum = zeros((laf,laf))
@@ -214,9 +243,16 @@ def cox (nn,maxi, target,tsp,delta):
         temp2 = zeros([p,p,laf]).astype(float32)
         temp3 = zeros([p,p,laf]).astype(float32)
         # func3(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,int_(laf),1))
+        start = datetime.now()
         func2(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp1),block = (p,1,1) ,grid = (p,int_(laf),1))
+        end1 = datetime.now()
+        print "temp1: " + str(datetime.now() - start)
         func3(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp2),block = (p,1,1) ,grid = (p,int_(laf),1))
+        end2 = datetime.now()
+        print "temp2: " + str(datetime.now() - end1)
         func4(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,int_(laf),1))
+        end3 = datetime.now()
+        print "temp3: " + str(datetime.now() - end2)
 
         func5(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(vi),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,1,1))
         # func2(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(vi),block = (p,1,1) ,grid = (p,1,1))

@@ -81,50 +81,50 @@ def cox (nn,maxi, target,tsp,delta):
     """)
 
 
-
-    mod3 = SourceModule("""
-    #include <stdio.h>
-    #include <math.h>
-    __global__ void temp_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf, float *temp1, float *temp2, float *temp3)
-    {
-    int m = threadIdx.x;
-    int j = blockIdx.x ;
-    int k = blockIdx.y ;
-
-    float t1=0;
-    float t2=0;
-    float t3=0;
-     for (int i = m; i<laf*laf; i += laf )
-    {
-    t1 += z2[j*laf*laf + i] * z2[k*laf*laf + i] * ssum_d[i];
-    t2 += z2[j*laf*laf + i] * ssum_d[i];
-    t3 += z2[k*laf*laf + i] * ssum_d[i];
-    }
-    temp1[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t1;
-    temp2[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t2;
-    temp3[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t3;
-    }
-    """)
-
-
-    mod4 = SourceModule("""
-    #include <stdio.h>
-    #include <math.h>
-    __global__ void hessian(float *z2,float *ssum_d,float *sumte_d ,int laf, float *vi,  float *temp1, float *temp2, float *temp3)
-    {
-     int m = threadIdx.x ;
-     int n = blockIdx.x ;
-     int b = gridDim.x;
-     float part1 = 0;
-     float part2 = 0;
-     for (int j = 0; j<laf ;j++)
-        {
-        part1 += temp1[m*b*laf+n*laf+j]/sumte_d[j];
-        part2 += (temp2[m*b*laf+n*laf+j]*temp3[m*b*laf+n*laf+j])/ (sumte_d[j]*sumte_d[j]);
-        }
-        vi[m*b+n] = part1-part2;
-    }
-    """)
+    #
+    # mod3 = SourceModule("""
+    # #include <stdio.h>
+    # #include <math.h>
+    # __global__ void temp_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf, float *temp1, float *temp2, float *temp3)
+    # {
+    # int m = threadIdx.x;
+    # int j = blockIdx.x ;
+    # int k = blockIdx.y ;
+    #
+    # float t1=0;
+    # float t2=0;
+    # float t3=0;
+    #  for (int i = m; i<laf*laf; i += laf )
+    # {
+    # t1 += z2[j*laf*laf + i] * z2[k*laf*laf + i] * ssum_d[i];
+    # t2 += z2[j*laf*laf + i] * ssum_d[i];
+    # t3 += z2[k*laf*laf + i] * ssum_d[i];
+    # }
+    # temp1[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t1;
+    # temp2[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t2;
+    # temp3[j*blockDim.x * gridDim.y  + k*blockDim.x + m] =t3;
+    # }
+    # """)
+    #
+    #
+    # mod4 = SourceModule("""
+    # #include <stdio.h>
+    # #include <math.h>
+    # __global__ void hessian(float *z2,float *ssum_d,float *sumte_d ,int laf, float *vi,  float *temp1, float *temp2, float *temp3)
+    # {
+    #  int m = threadIdx.x ;
+    #  int n = blockIdx.x ;
+    #  int b = gridDim.x;
+    #  float part1 = 0;
+    #  float part2 = 0;
+    #  for (int j = 0; j<laf ;j++)
+    #     {
+    #     part1 += temp1[m*b*laf+n*laf+j]/sumte_d[j];
+    #     part2 += (temp2[m*b*laf+n*laf+j]*temp3[m*b*laf+n*laf+j])/ (sumte_d[j]*sumte_d[j]);
+    #     }
+    #     vi[m*b+n] = part1-part2;
+    # }
+    # """)
 
 
     func = mod.get_function("z_function")
@@ -144,13 +144,94 @@ def cox (nn,maxi, target,tsp,delta):
     start = datetime.now()
 
     func(cuda.InOut(tspamt_d),  cuda.InOut(a_d), cuda.InOut(isiat_d), cuda.InOut(tspz),cuda.InOut(z), int_(p), int_(maxi_d), block=(int_(laf),1, 1), grid=(p, int_(laf)))
-    func3 = mod3.get_function("temp_calculator")
-    func4 = mod4.get_function("hessian")
+    # func3 = mod3.get_function("temp_calculator")
+    # func4 = mod4.get_function("hessian")
     end = datetime.now()
     ztime= end-start
     print(ztime)
     bet = 0.2*ones(p)
-    landa = 1. ;
+    landa = 1.
+    mod2 = SourceModule("""
+        #include <stdio.h>
+        #include <math.h>
+        __global__ void temp1_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf, float *temp1)
+        {
+        int m = threadIdx.x ;
+        int j = blockIdx.x ;
+        int k = blockIdx.y;
+       //  if(j==0 && k ==0){
+        //  printf("Number: %d out of %d       ",m,blockDim.x);
+         // }
+
+        float t1=0;
+         for (int i = k; i<laf*laf; i += laf )
+        {
+        t1 += z2[m*laf*laf + i] * z2[j*laf*laf + i] * ssum_d[i];
+        }
+
+        temp1[m*gridDim.x*gridDim.y + j*gridDim.y + k] = t1;
+        }
+        """)
+    func2 = mod2.get_function("temp1_calculator")
+    mod3 = SourceModule("""
+        #include <stdio.h>
+        #include <math.h>
+        __global__ void temp2_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf,float *temp2)
+        {
+        int m = threadIdx.x ;
+        int j = blockIdx.x ;
+        int k = blockIdx.y;
+
+        float t2=0;
+         for (int i = k; i<laf*laf; i += laf )
+        {
+        t2 += z2[m*laf*laf + i] * ssum_d[i];
+        }
+
+        temp2[m*gridDim.x*gridDim.y + j*gridDim.y + k] = t2;
+        }
+        """)
+    func3 = mod3.get_function("temp2_calculator")
+    mod4 = SourceModule("""
+        #include <stdio.h>
+        #include <math.h>
+        __global__ void temp3_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf,float *temp3)
+        {
+        int m = threadIdx.x ;
+        int j = blockIdx.x ;
+        int k = blockIdx.y;
+
+        float t3=0;
+         for (int i = k; i<laf*laf; i += laf )
+        {
+        t3 += z2[j*laf*laf + i] * ssum_d[i];
+        }
+
+        temp3[m*gridDim.x*gridDim.y + j*gridDim.y + k] = t3;
+        }
+        """)
+    func4 = mod4.get_function("temp3_calculator")
+    mod5 = SourceModule("""
+        #include <stdio.h>
+        #include <math.h>
+        __global__ void hessian(float *z2,float *ssum_d,float *sumte_d ,int laf, float *vi,  float *temp1, float *temp2, float *temp3)
+        {
+         int m = threadIdx.x ;
+         int n = blockIdx.x ;
+         int b = gridDim.x;
+
+
+         float part1 = 0;
+         float part2 = 0;
+         for (int j = 0; j<laf ;j++)
+            {
+            part1 += temp1[m*b*laf+n*laf+j]/sumte_d[j];
+            part2 += (temp2[m*b*laf+n*laf+j]*temp3[m*b*laf+n*laf+j])/ (sumte_d[j]*sumte_d[j]);
+            }
+            vi[m*b+n] = part1-part2;
+        }
+        """)
+    func5 = mod5.get_function("hessian")
     for i in range (0,100):
         scc = zeros_like(z) ;
         for l in range (0,p):
@@ -175,9 +256,21 @@ def cox (nn,maxi, target,tsp,delta):
         temp2 = zeros([p, p, laf]).astype(float32)
         temp3 = zeros([p, p, laf]).astype(float32)
 
-        func3(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (int_(laf) ,1,1) ,grid = (p,p,1))
-        func4(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(vi),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,1,1))
+        # func2(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (int_(laf) ,1,1) ,grid = (p,p,1))
+        # func3(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(vi),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,1,1))
         # func2(cuda.InOut(float32(z2)),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),int32(p),cuda.InOut(vi),block = (p,1,1) ,grid = (p,1,1))
+        func2(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp1), block=(p, 1, 1),grid=(p, int_(laf), 1))
+        end1 = datetime.now()
+        print( end1 - start)
+        func3(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp2), block=(p, 1, 1),grid=(p, int_(laf), 1))
+        end2 = datetime.now()
+        print(end2 - end1)
+        func4(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp3), block=(p, 1, 1), grid=(p, int_(laf), 1))
+        end3 = datetime.now()
+        print(end3 - end2)
+
+        func5(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(vi), cuda.InOut(temp1),
+              cuda.InOut(temp2), cuda.InOut(temp3), block=(p, 1, 1), grid=(p, 1, 1))
         dot_temp = dot(vi.T,vi)
         estimate = bet + dot(dot(linalg.inv(dot_temp + landa * diag(diag (dot_temp))), vi.T) , score)
 
