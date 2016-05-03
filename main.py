@@ -9,9 +9,9 @@ from datetime import *
 # from scipy.stats import norm
 # from scipy.optimize.zeros import results_c
 # from scipy.io import *
-from cox_alg1_source import cox
-nn = 64
-path = "/home/corriel/Desktop/Data_Cuda/For GPU-GPU/Neuron-based/64/restest1.res"
+from cox_alg2_source import cox
+nn = 16
+path = "E:\Data_Cuda\For CPU-GPU\Spike-based\\restest1_20.res"
 
 # import os
 # from Tkconstants import FIRST
