@@ -156,11 +156,12 @@ def cox (nn,maxi, target,tsp,delta):
         #include <math.h>
         __global__ void temp1_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf, float *temp1)
         {
-        int m = threadIdx.x ;
+
+        int k = threadIdx.x ;
         int j = blockIdx.x ;
-        int k = blockIdx.y;
-       //  if(j==0 && k ==0){
-        //  printf("Number: %d out of %d       ",m,blockDim.x);
+        int m = blockIdx.y;
+       //  if(j==0 && m ==0){
+        ///  printf("Number: %d out of %d       ",k,blockDim.x);
          // }
 
         float t1=0;
@@ -168,8 +169,8 @@ def cox (nn,maxi, target,tsp,delta):
         {
         t1 += z2[m*laf*laf + i] * z2[j*laf*laf + i] * ssum_d[i];
         }
-
-        temp1[m*gridDim.x*gridDim.y + j*gridDim.y + k] = t1;
+        //if (j==0 ){printf("%d   " , m*gridDim.x*gridDim.y + j*gridDim.y + k);}
+        temp1[m*gridDim.x*blockDim.x + j*blockDim.x + k] = t1;
         }
         """)
     func2 = mod2.get_function("temp1_calculator")
@@ -178,9 +179,9 @@ def cox (nn,maxi, target,tsp,delta):
         #include <math.h>
         __global__ void temp2_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf,float *temp2)
         {
-        int m = threadIdx.x ;
+        int k = threadIdx.x ;
         int j = blockIdx.x ;
-        int k = blockIdx.y;
+        int m = blockIdx.y;
 
         float t2=0;
          for (int i = k; i<laf*laf; i += laf )
@@ -188,7 +189,7 @@ def cox (nn,maxi, target,tsp,delta):
         t2 += z2[m*laf*laf + i] * ssum_d[i];
         }
 
-        temp2[m*gridDim.x*gridDim.y + j*gridDim.y + k] = t2;
+        temp2[m*gridDim.x*blockDim.x + j*blockDim.x + k] = t2;
         }
         """)
     func3 = mod3.get_function("temp2_calculator")
@@ -197,9 +198,9 @@ def cox (nn,maxi, target,tsp,delta):
         #include <math.h>
         __global__ void temp3_calculator(float *z2,float *ssum_d,float *sumte_d ,int laf,float *temp3)
         {
-        int m = threadIdx.x ;
+        int k = threadIdx.x ;
         int j = blockIdx.x ;
-        int k = blockIdx.y;
+        int m = blockIdx.y;
 
         float t3=0;
          for (int i = k; i<laf*laf; i += laf )
@@ -207,7 +208,7 @@ def cox (nn,maxi, target,tsp,delta):
         t3 += z2[j*laf*laf + i] * ssum_d[i];
         }
 
-        temp3[m*gridDim.x*gridDim.y + j*gridDim.y + k] = t3;
+        temp3[m*gridDim.x*blockDim.x + j*blockDim.x + k] = t3;
         }
         """)
     func4 = mod4.get_function("temp3_calculator")
@@ -259,13 +260,13 @@ def cox (nn,maxi, target,tsp,delta):
         # func2(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (int_(laf) ,1,1) ,grid = (p,p,1))
         # func3(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(vi),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,1,1))
         # func2(cuda.InOut(float32(z2)),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),int32(p),cuda.InOut(vi),block = (p,1,1) ,grid = (p,1,1))
-        func2(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp1), block=(p, 1, 1),grid=(p, int_(laf), 1))
+        func2(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp1), block=(int_(laf), 1, 1),grid=(p, p, 1))
         end1 = datetime.now()
         print( end1 - start)
-        func3(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp2), block=(p, 1, 1),grid=(p, int_(laf), 1))
+        func3(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp2), block=(int_(laf), 1, 1),grid=(p,p, 1))
         end2 = datetime.now()
         print(end2 - end1)
-        func4(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp3), block=(p, 1, 1), grid=(p, int_(laf), 1))
+        func4(cuda.InOut(z), cuda.InOut(ssum_d), cuda.InOut(sumte_d), int32(laf_d), cuda.InOut(temp3), block=(int_(laf), 1, 1), grid=(p, p, 1))
         end3 = datetime.now()
         print(end3 - end2)
 
