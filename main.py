@@ -9,9 +9,10 @@ from datetime import *
 # from scipy.stats import norm
 # from scipy.optimize.zeros import results_c
 # from scipy.io import *
-from cox_alg2_source import cox
-nn = 16
-path = "E:\Data_Cuda\For CPU-GPU\Spike-based\\restest1_20.res"
+from cox_alg1_source import cox
+nn = 256
+path = "/home/corriel/Desktop/Data_Cuda/For GPU-GPU/Neuron-based/"+ str(nn) + "/restest1.res"
+# path = '/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Spike-based/restest1_40.res'
 
 # import os
 # from Tkconstants import FIRST
@@ -199,11 +200,9 @@ for neuron in range (0,nn):
     tsp = ref
     tsp_b = ref_b
     delta = zeros ([p])
-    tot_st = datetime.now()
-    betahat,betaci,zt = cox(nn,maxi,target,int_(tsp),delta)
+    betahat,betaci = cox(nn,maxi,target,int_(tsp),delta)
     # tsp_b [where(tsp_b) == -1] = 0
     # betahat,betaci,zt = cox(nn,maxi_b , target_b, tsp_b.astype(int), delta)
-    ztime = zt + ztime
     if (neuron == 0):
             results[0,1:] = betahat
             confidence[0:2,1:] = betaci.T
@@ -216,10 +215,7 @@ for neuron in range (0,nn):
         ind_temp = 3*(neuron+1) - 3
         confidence [ind_temp:ind_temp+2 , 0:neuron] = betaci.T [:,0:neuron]
         confidence [ind_temp:ind_temp+2 , neuron+1:] = betaci.T [:, neuron:]
-    tot_en = datetime.now()
-    total_temp = tot_en-tot_st
-    total = total + total_temp
-
+    print "Neuron " + str(neuron+1) + " out of " + str(nn) + " finished."
 
 print (results)
 print("\n\n\n\n\n")

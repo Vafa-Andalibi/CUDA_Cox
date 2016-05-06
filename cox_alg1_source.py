@@ -3,13 +3,11 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
 from numpy import * 
-from datetime import *
 from scipy.stats import norm
 from scipy.io import *
 
 def cox (nn,maxi, target,tsp,delta):
 
-    whole = datetime.now()
     p = nn-1
     if p == 1 :
         gamma0 = 0.95
@@ -104,13 +102,9 @@ def cox (nn,maxi, target,tsp,delta):
     a_d = a
     isiat_d = isiat
     maxi_d = maxi.item()
-    start = datetime.now()
 
     func(cuda.InOut(tspamt_d),  cuda.InOut(a_d), cuda.InOut(isiat_d), cuda.InOut(tspz),cuda.InOut(z), int_(p), int_(maxi_d), block=(p, 1, 1), grid=(int_(laf), int_(laf)))
 
-    end = datetime.now()
-    ztime= end-start
-    print(ztime)
     bet = 0.2*ones(p)
     landa = 1.
     mod2 = SourceModule("""
@@ -243,20 +237,13 @@ def cox (nn,maxi, target,tsp,delta):
         temp2 = zeros([p,p,laf]).astype(float32)
         temp3 = zeros([p,p,laf]).astype(float32)
         # func3(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,int_(laf),1))
-        start = datetime.now()
         func2(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp1),block = (p,1,1) ,grid = (p,int_(laf),1))
-        end1 = datetime.now()
-        print "temp1: " + str(datetime.now() - start)
         func3(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp2),block = (p,1,1) ,grid = (p,int_(laf),1))
-        end2 = datetime.now()
-        print "temp2: " + str(datetime.now() - end1)
         func4(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,int_(laf),1))
-        end3 = datetime.now()
-        print "temp3: " + str(datetime.now() - end2)
 
         func5(cuda.InOut(z),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(vi),cuda.InOut(temp1),cuda.InOut(temp2),cuda.InOut(temp3),block = (p,1,1) ,grid = (p,1,1))
         # func2(cuda.InOut(z2),cuda.InOut(ssum_d),cuda.InOut(sumte_d),int32(laf_d),cuda.InOut(vi),block = (p,1,1) ,grid = (p,1,1))
-        dot_temp = dot(vi.T,vi)
+        # dot_temp = dot(vi.T,vi)
         # estimate = bet + dot(dot(linalg.inv(dot_temp + landa * diag(diag (dot_temp))), vi.T) , score)
         estimate = bet + reshape(dot(linalg.inv(vi),reshape(score, (p,1))),(1,p))[0]
 
@@ -286,7 +273,5 @@ def cox (nn,maxi, target,tsp,delta):
     for i in range (0,p):
         betaci[i,0] = betahat[i] + nx[0] / sqrt(vi[i,i])
         betaci[i,1] = betahat[i] + nx[1] / sqrt(vi[i,i])
-    whole_end = datetime.now()-whole
-    print("whole is: ",whole_end)
-    return (betahat, betaci,ztime) 
+    return (betahat, betaci)
 
