@@ -9,9 +9,10 @@ from datetime import *
 # from scipy.stats import norm
 # from scipy.optimize.zeros import results_c
 # from scipy.io import *
-from cox_alg1_source import cox
-nn = 256
-path = "/home/corriel/Desktop/Data_Cuda/For GPU-GPU/Neuron-based/"+ str(nn) + "/restest1.res"
+from cox_alg2_source import cox
+nn = 24
+# path = "/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Neuron-based/"+ str(nn) + "/restest1.res"
+path = "/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Spike-based/restest1_32.res"
 # path = '/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Spike-based/restest1_40.res'
 
 # import os
@@ -215,7 +216,7 @@ for neuron in range (0,nn):
         ind_temp = 3*(neuron+1) - 3
         confidence [ind_temp:ind_temp+2 , 0:neuron] = betaci.T [:,0:neuron]
         confidence [ind_temp:ind_temp+2 , neuron+1:] = betaci.T [:, neuron:]
-    print "Neuron " + str(neuron+1) + " out of " + str(nn) + " finished."
+    print "Neuron " + str(neuron+1) + " out of " + str(nn) + " finished at %s."  %datetime.now()
 
 print (results)
 print("\n\n\n\n\n")
