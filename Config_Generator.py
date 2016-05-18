@@ -2,7 +2,8 @@ from numpy import *
 import random as ran
 number_of_neurons = 1024
 max_conn_per_neuron = 2
-with open('E:\Data_Cuda\For GPU-GPU\Neuron-based\\' + str(number_of_neurons) + '\\np.np', 'w+') as f:
+path = 'E:\\'
+with open(path+'np.np', 'w+') as f:
 
     for idx in range(1,number_of_neurons+1):
         max_thr = 45 + (random.rand(1) * random.randint(-2,3,size=1)+random.rand(1))
@@ -17,7 +18,7 @@ with open('E:\Data_Cuda\For GPU-GPU\Neuron-based\\' + str(number_of_neurons) + '
         type = 0
         f.write("neuron%d\n %f %f %f %f %f %f %f %f %d %d\n"%(idx,max_thr,dec_thr,thr_inf,amp_ns,dec_ns,init_pot,dec_mpt,ext_inp,ref,type))
 
-with open('E:\Data_Cuda\For GPU-GPU\Neuron-based\\' + str(number_of_neurons) + '\\cp.cp', 'w+') as f:
+with open(path+'cp.cp', 'w+') as f:
     for idx in range(1, number_of_neurons+1):
         conn_num = array(random.randint(1,max_conn_per_neuron+1))
         sample = arange(1,number_of_neurons+1)

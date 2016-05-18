@@ -7,7 +7,7 @@ from scipy.stats import norm
 from scipy.io import *
 
 def cox (nn,maxi, target,tsp,delta):
-
+    '''The main cox method'''
     p = nn-1
     if p == 1 :
         gamma0 = 0.95
@@ -15,6 +15,7 @@ def cox (nn,maxi, target,tsp,delta):
         gamma0 = 1 - (1-0.05)/ (p*(p-1))
     if gamma0 < 0.95:
         gamma0 = 0.95
+    #: Doc comment for instance attribute qux.
     pval = 1 - gamma0
     tol = 0.0001*ones((p))
     flag = 1 

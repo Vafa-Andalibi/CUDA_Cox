@@ -9,10 +9,11 @@ from datetime import *
 # from scipy.stats import norm
 # from scipy.optimize.zeros import results_c
 # from scipy.io import *
-from cox_alg2_source import cox
-nn = 24
+# from cox_alg2_source import *
+from cox_alg1_source import cox
+nn = 4
 # path = "/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Neuron-based/"+ str(nn) + "/restest1.res"
-path = "/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Spike-based/restest1_32.res"
+path = "e:\\restest1_25.res"
 # path = '/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Spike-based/restest1_40.res'
 
 # import os
@@ -130,7 +131,7 @@ path = "/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Spike-based/restest1_32.res"
 
 ########### following lines are for applying the cox method on ".res" file 
 ###########
-
+'''The main function is here. '''
 p = nn - 1
 total = datetime.now()
 total = total - total
@@ -201,7 +202,9 @@ for neuron in range (0,nn):
     tsp = ref
     tsp_b = ref_b
     delta = zeros ([p])
-    betahat,betaci = cox(nn,maxi,target,int_(tsp),delta)
+    # cox = Cox_Method(nn,maxi,target,int_(tsp),delta)
+    # betahat,betaci = cox.alg2()
+    betahat, betaci= cox(nn,maxi,target,int_(tsp),delta)
     # tsp_b [where(tsp_b) == -1] = 0
     # betahat,betaci,zt = cox(nn,maxi_b , target_b, tsp_b.astype(int), delta)
     if (neuron == 0):
@@ -218,7 +221,10 @@ for neuron in range (0,nn):
         confidence [ind_temp:ind_temp+2 , neuron+1:] = betaci.T [:, neuron:]
     print "Neuron " + str(neuron+1) + " out of " + str(nn) + " finished at %s."  %datetime.now()
 
-print (results)
+for row in results:
+    row = list(row)
+
+print (list(results))
 print("\n\n\n\n\n")
 print (confidence)
 
@@ -239,6 +245,5 @@ to_file = to_r.T
 # savemat('d:/new2.mat', mdict = {'arr' : to_file})
 print("\n\n\n\n\n")
 print (to_file)
-print (ztime/nn)
-print (total)
+
 
