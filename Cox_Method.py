@@ -94,7 +94,9 @@ class Cox_Method(object) :
         self.laf_s = int_(sqrt(self.laf) + 1)
         self.bet = 0.2 * ones(self.p)
         self.landa = 1.
-    def alg1 (self):
+
+    def alg1(self):
+
         '''
             Implementation of the first Z-value algorithm. At the end of this implementation, the hessian function is called internally.
 
@@ -105,8 +107,55 @@ class Cox_Method(object) :
             * mod_z1: The CUDA kernel of the first algorithm.
             * t1 (in kernel): Backward recurrence time.
         '''
-
         self.mod_z1 = SourceModule("""
+                #include <stdio.h>
+                #include <math.h>
+                __global__ void z_function(float *tspamt, float *a, float *isiat, float *tspz,  float *z, long p , int maxi,float gm, float alphas, float alphar)
+                {
+                int m = threadIdx.x ;
+                int i = blockIdx.y;
+                int j = blockIdx.x;
+                if (i>=j)
+                    {
+                    float t1;
+                    int temp = a[m*gridDim.y+i];
+                    int temp2 = a[m*gridDim.y+j];
+                    int index = 0 ;
+                    t1 = tspamt [m*gridDim.y+temp] - isiat [m*gridDim.y+temp] + isiat [m*gridDim.y+temp2] ;
+                    for (int k = m; k < p*maxi ;k+=p)
+                    {
+                            if (tspz [k] < t1 && tspz [k] != -1 && index < k)
+                        {
+                           index= k ;
+                         }
+                    }
+                    float bwt;
+                    bwt = t1 - tspz [index];
+                    z[gridDim.y*gridDim.y*m + gridDim.y*i + j] = (1/gm)*((exp(-bwt/alphas)-exp(-bwt/alphar))/(alphas-alphar));
+              }
+                }
+                """)  # The CUDA kernel of the first algorithm.
+
+        z1_func = self.mod_z1.get_function("z_function")
+        z1_func(cuda.InOut(self.tspamt_d), cuda.InOut(self.a_d), cuda.InOut(self.isiat_d), cuda.InOut(self.tspz),
+                cuda.InOut(self.z), int_(self.p),
+                int_(self.maxi_d), float32(self.gm), float32(self.alphas), float32(self.alphar), block=(self.p, 1, 1),
+                grid=(int_(self.laf), int_(self.laf)))
+        return self.hessian()
+
+    def alg2 (self):
+        '''
+            Implementation of the second Z-value algorithm. At the end of this implementation, the hessian function is called internally.
+
+            :return: The array of betahats for each reference spike train as well as the confidence interval corresponding to each betahat value.
+
+            Main internal variables:
+
+            * mod_z2: The CUDA kernel of the second algorithm.
+            * t1 (in kernel): Backward recurrence time.
+        '''
+
+        self.mod_z2 = SourceModule("""
         #include <stdio.h>
         #include <math.h>
         __global__ void z_function(float *tspamt, float *a, float *isiat, float *tspz,  float *z, long p , int maxi, float gm, float alphas, float alphar)
@@ -135,54 +184,11 @@ class Cox_Method(object) :
         }
         }
         """) # The CUDA kernel of the first algorithm.
-        z1_func = self.mod_z1.get_function("z_function")
-        z1_func(cuda.InOut(self.tspamt_d),  cuda.InOut(self.a_d), cuda.InOut(self.isiat_d), cuda.InOut(self.tspz),cuda.InOut(self.z), \
+        z2_func = self.mod_z2.get_function("z_function")
+        z2_func(cuda.InOut(self.tspamt_d),  cuda.InOut(self.a_d), cuda.InOut(self.isiat_d), cuda.InOut(self.tspz),cuda.InOut(self.z), \
              int_(self.p), int_(self.maxi_d),float32(self.gm),float32(self.alphas),float32(self.alphar), block=(int_(self.laf),1, 1), grid=(self.p, int_(self.laf)))
         return self.hessian()
-    def alg2(self):
-        '''
-            Implementation of the second Z-value algorithm. At the end of this implementation, the hessian function is called internally.
 
-            :return: The array of betahats for each reference spike train as well as the confidence interval corresponding to each betahat value.
-
-            Main internal variables:
-
-            * mod_z2: The CUDA kernel of the second algorithm.
-            * t1 (in kernel): Backward recurrence time.
-        '''
-        self.mod_z2 = SourceModule("""
-            #include <stdio.h>
-            #include <math.h>
-            __global__ void z_function(float *tspamt, float *a, float *isiat, float *tspz,  float *z, long p , int maxi,float gm, float alphas, float alphar)
-            {
-            int m = threadIdx.x ;
-            int i = blockIdx.y;
-            int j = blockIdx.x;
-            if (i>=j)
-                {
-                float t1;
-                int temp = a[m*gridDim.y+i];
-                int temp2 = a[m*gridDim.y+j];
-                int index = 0 ;
-                t1 = tspamt [m*gridDim.y+temp] - isiat [m*gridDim.y+temp] + isiat [m*gridDim.y+temp2] ;
-                for (int k = m; k < p*maxi ;k+=p)
-                {
-                        if (tspz [k] < t1 && tspz [k] != -1 && index < k)
-                    {
-                       index= k ;
-                     }
-                }
-                float bwt;
-                bwt = t1 - tspz [index];
-                z[gridDim.y*gridDim.y*m + gridDim.y*i + j] = (1/gm)*((exp(-bwt/alphas)-exp(-bwt/alphar))/(alphas-alphar));
-          }
-            }
-            """) # The CUDA kernel of the first algorithm.
-
-        z2_func = self.mod_z2.get_function("z_function")
-        z2_func(cuda.InOut(self.tspamt_d), cuda.InOut(self.a_d), cuda.InOut(self.isiat_d), cuda.InOut(self.tspz), cuda.InOut(self.z), int_(self.p),
-             int_(self.maxi_d),float32(self.gm),float32(self.alphas),float32(self.alphar), block=(self.p, 1, 1), grid=(int_(self.laf), int_(self.laf)))
-        return self.hessian()
     def hessian(self):
         '''
             Implementation of the Hessian function. This method is called from Alg1() or Alg2() methods. It uses thte z_values calculated \
