@@ -23,13 +23,10 @@ The interest of proposing GPU implementations is in gaining computation time, bu
 
 The API documentation is available in *./Sphinx/output/documentation.html*
 
-##Tests
-
-Describe and show how to run the tests with code examples.
-
 ##Citation
 
 If you use this library for your published research, we suggest that you cite our paper:
+
 Andalibi et al. 2016
 
 ##License
