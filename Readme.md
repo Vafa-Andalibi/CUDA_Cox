@@ -17,7 +17,7 @@ The interest of proposing GPU implementations is in gaining computation time, bu
 
 ##API Reference
 
-The API documentation is available in *./Sphinx/output/documentation.html*
+The API documentation is available in *./Sphinx/output/documentation.html*. Downloading the "./Sphinx/output" is sufficient for access. 
 
 ##Citation
 
