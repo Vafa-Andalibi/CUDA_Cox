@@ -2,7 +2,7 @@ from numpy import *
 import random as ran
 def config_generator (number_of_neurons,max_conn_per_neuron,save_path):
     '''
-    An ELIF model can be simulated using software from the following web-site: http://www.tech.plymouth.ac.uk/infovis. To run\
+    An ELIF model neuron can be simulated using software from the following web-site: http://www.tech.plymouth.ac.uk/infovis. To run\
     the simulation, the parameters of ELIF neurons and their coupling should be specified. This function generates the \
     configuration files needed for that software.
 
