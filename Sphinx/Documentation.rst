@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to CUDA_Cox's documentation!
+Cuda-Accelerated Cox Method Documentation
 ====================================
 
 
@@ -13,8 +13,8 @@ This is the documentation of the GPU-implemented version of Cox method using CUD
 .. toctree::
    :maxdepth: 2
    
-   Code
    Project
+   Code
    
 
 Indices and tables

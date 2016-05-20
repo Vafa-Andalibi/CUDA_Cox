@@ -10,7 +10,7 @@ from datetime import *
 # from scipy.optimize.zeros import results_c
 # from scipy.io import *
 # from cox_alg2_source import *
-from cox_alg1_source import cox
+from Cox_Method import Cox_Method
 nn = 4
 # path = "/home/corriel/Desktop/Data_Cuda/For CPU-GPU/Neuron-based/"+ str(nn) + "/restest1.res"
 path = "e:\\restest1_25.res"
