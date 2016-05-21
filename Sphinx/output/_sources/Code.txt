@@ -1,6 +1,5 @@
-Package
+CUDA-Cox Package
 ====================================
-This package consists of ... 
 
 Cox Method module 
 ------------------------------------
