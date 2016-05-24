@@ -4,11 +4,10 @@
    contain the root `toctree` directive.
 
 Cuda-Accelerated Cox Method Documentation
-====================================
+=========================================
 
 
-Contents:
-This is the documentation of the GPU-implemented version of Cox method using CUDA. 
+This is the documentation of the GPU-implemented version of Cox method using CUDA for effective connectivity analysis of neural networks based on their spike trains. 
 
 .. toctree::
    :maxdepth: 2
