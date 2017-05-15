@@ -1,4 +1,3 @@
-*.rb linguist-language=Python/CUDA
 # Auto detect text files and perform LF normalization
 * text=auto
 
@@ -18,3 +17,4 @@
 *.RTF	 diff=astextplain
 
 
+Sphinx/* linguist-vendored
