@@ -64,12 +64,12 @@ class Cox_Method(object) :
             self.isia = append(start, self.isi[k:])
             self.la = append(self.la, len(self.isia))
             self.tspam = cumsum(self.isia)
-            self.v[i, 0:self.la[i]] = self.isia[0:self.la[i]]
-            self.v1[i, 0:self.la[i]] = self.tspam[0:self.la[i]]
+            self.v[i, 0:int(self.la[i])] = self.isia[0:int(self.la[i])]
+            self.v1[i, 0:int(self.la[i])] = self.tspam[0:int(self.la[i])]
 
         self.laf = min(self.la)
-        self.isiat = self.v[0:self.p, 0:self.laf] # Is the matrix of interspike intervals of all reference spike trains.
-        self.tspamt = self.v1[0:self.p, 0:self.laf] # Is the matrix of spikes of all reference neurons.
+        self.isiat = self.v[0:int(self.p), 0:int(self.laf)] # Is the matrix of interspike intervals of all reference spike trains.
+        self.tspamt = self.v1[0:int(self.p), 0:int(self.laf)] # Is the matrix of spikes of all reference neurons.
         self.b = zeros(self.p)
         self.tspz = append(self.b, tsp)
         self.tspz = reshape(self.tspz, (maxi + 1, self.p))
@@ -84,7 +84,7 @@ class Cox_Method(object) :
         self.a = self.a.astype(float32)
         self.isiat = self.isiat.astype(float32)
         self.tspz = self.tspz.astype(float32)
-        self.b = zeros((self.p, self.laf, self.laf))
+        self.b = zeros((int(self.p), int(self.laf), int(self.laf)))
         self.z = self.b.astype(float32) # The 3-D matrix of Z-values
         self.tspamt_d = self.tspamt
         self.inda_d = self.inda
@@ -299,7 +299,7 @@ class Cox_Method(object) :
             self.scc = zeros_like(self.z) ; #3D matrix resulted from summation of diagonal values of Z multiplied by corresponding betahat for calculating the loglikelihood
             for l in range (0,self.p):
                 self.scc [l,:,:] = self.bet[l] * self.z[l,:,:]
-            self.ssum = zeros((self.laf,self.laf))#2D matrix resulted from sumation of scc 3rd dimension.
+            self.ssum = zeros((int(self.laf),int(self.laf)))#2D matrix resulted from sumation of scc 3rd dimension.
             for g in range (0,self.p):
                 self.ssum = self.ssum + self.scc[g,:,:]
             self.sumte = sum(tril(exp(self.ssum)),axis=0) # The sumation of diagonal values of ssum.
@@ -313,9 +313,9 @@ class Cox_Method(object) :
             self.ssum_d = exp(self.ssum)
             self.ssum_d= self.ssum_d.astype(float32)
             self.sumte_d = self.sumte.astype(float32)
-            self.part1 = zeros([self.p, self.p, self.laf]).astype(float32)
-            self.part2 = zeros([self.p, self.p, self.laf]).astype(float32)
-            self.part3 = zeros([self.p, self.p, self.laf]).astype(float32)
+            self.part1 = zeros([int(self.p), int(self.p), int(self.laf)]).astype(float32)
+            self.part2 = zeros([int(self.p), int(self.p), int(self.laf)]).astype(float32)
+            self.part3 = zeros([int(self.p), int(self.p), int(self.laf)]).astype(float32)
             part1_func(cuda.InOut(self.z), cuda.InOut(self.ssum_d), cuda.InOut(self.sumte_d), int32(self.laf_d), cuda.InOut(self.part1), block=(int_(self.laf), 1, 1),grid=(self.p, self.p, 1))
             part2_func(cuda.InOut(self.z), cuda.InOut(self.ssum_d), cuda.InOut(self.sumte_d), int32(self.laf_d), cuda.InOut(self.part2), block=(int_(self.laf), 1, 1),grid=(self.p,self.p, 1))
             part3_func(cuda.InOut(self.z), cuda.InOut(self.ssum_d), cuda.InOut(self.sumte_d), int32(self.laf_d), cuda.InOut(self.part3), block=(int_(self.laf), 1, 1), grid=(self.p, self.p, 1))

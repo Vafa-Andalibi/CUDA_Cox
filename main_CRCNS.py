@@ -6,7 +6,7 @@ from numpy import *
 from matplotlib.pyplot import *
 import pickle
 
-def main_CRCNS (data_path,recording_length,window_length,overlap):
+def main_CRCNS (data_path,recording_length,window_length,overlap,minimum_spike):
     '''
     This is the main function that applies the cox method on the pickle data saved by CRCNS_to_COX. This function plots the \
     adjacency matrix of connection weights in a window-based manner.
@@ -46,7 +46,7 @@ def main_CRCNS (data_path,recording_length,window_length,overlap):
         for qp in spikes:
             temp_spikes[qp] = array([tt for tt in spikes[qp] if (tt <u_band and tt>l_band)])
         temp_lengths = array([len(temp_spikes[q]) for q in temp_spikes])
-        non_small_indices = array(where(temp_lengths>256)[0])
+        non_small_indices = array(where(temp_lengths>minimum_spike)[0])
         selected_spikes = {}
         for non_small in non_small_indices :
             selected_spikes[non_small] = temp_spikes[non_small]
@@ -123,3 +123,9 @@ def main_CRCNS (data_path,recording_length,window_length,overlap):
     grid()
     show()
 
+if __name__ == '__main__' :
+    recording_length = 1096400
+    window_length = 7000
+    minimum_spike_rate = 200
+    overlap = 100
+    main_CRCNS('./test', recording_length, window_length, overlap,minimum_spike_rate)
